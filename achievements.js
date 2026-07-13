@@ -1118,10 +1118,10 @@ window.gameData = {
     {
       id: "hardcore_17",
       category: "hardcore_challenge",
-      title: "遊戲信仰文身 (Gamer Tattoo)",
-      description: "將心儀遊戲角色的標誌或經典台詞以刺青形式印刻在自己身體上。",
+      title: "萬小時傳說 (10,000 Hour Legend)",
+      description: "跨所有平台累計遊玩時數超過一萬小時，達到「刻意練習」理論中的頂尖水準。",
       difficulty: "★★★★☆",
-      tips: "把信仰刻進血肉裡！遊戲的符號與記憶將永遠與你同在。"
+      tips: "一萬小時相當於一年多不吃不喝不睡地打遊戲，這代表你已經對遊戲付出了無可比擬的人生時光。"
     },
     {
       id: "hardcore_21",
