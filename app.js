@@ -203,10 +203,10 @@ function renderAchievements() {
         <div class="card-actions">
           <div class="couple-controls">
             <div class="action-select-wrapper">
-              <button class="state-btn ${state === 'unlocked' ? 'active-unlocked' : ''}" onclick="setAchievementState('${item.id}','unlocked')"><i class="bx bx-check-circle"></i> 已解鎖</button>
-              <button class="state-btn ${state === 'want' ? 'active-want' : ''}" onclick="setAchievementState('${item.id}','want')"><i class="bx bx-star"></i> 想挑戰</button>
+              <button class="state-btn ${state === 'unlocked' ? 'active-unlocked' : ''}" onclick="setAchievementState('${item.id}','unlocked', event)"><i class="bx bx-check-circle"></i> 已解鎖</button>
+              <button class="state-btn ${state === 'want' ? 'active-want' : ''}" onclick="setAchievementState('${item.id}','want', event)"><i class="bx bx-star"></i> 想挑戰</button>
             </div>
-            <button class="state-btn ${state === 'locked' ? 'active-unlocked' : ''}" onclick="setAchievementState('${item.id}','locked')" style="border-color: rgba(255,255,255,0.05);"><i class="bx bx-x"></i> 清除狀態</button>
+            <button class="state-btn ${state === 'locked' ? 'active-unlocked' : ''}" onclick="setAchievementState('${item.id}','locked', event)" style="border-color: rgba(255,255,255,0.05);"><i class="bx bx-x"></i> 清除狀態</button>
           </div>
         </div>
       </div>`;
@@ -225,13 +225,19 @@ window.toggleTips = function (id) {
 };
 
 // --- 設定成就狀態 ---
-window.setAchievementState = function (id, newState) {
+window.setAchievementState = function (id, newState, event) {
   userChoices.pa[id] = newState;
   saveLocalData();
   renderAchievements();
   calculateProgress();
   showToast(`✅ 已更新成就狀態！`, newState === "unlocked");
-  if (newState === "unlocked") triggerSparkles();
+  if (newState === "unlocked") {
+    if (event && typeof event.clientX === 'number' && typeof event.clientY === 'number') {
+      triggerSparkles(event.clientX, event.clientY);
+    } else {
+      triggerSparkles();
+    }
+  }
 };
 
 // --- 渲染目標清單頁 (Wishlist / Matcher) ---
@@ -261,7 +267,7 @@ function renderMatcher() {
           <h3 class="card-title">${item.title}</h3>
           <p class="card-desc">${item.description}</p>
           <div class="card-actions">
-            <button class="action-btn matched-complete-btn" onclick="setAchievementState('${item.id}','unlocked');renderMatcher();" style="border-color:var(--accent-cyan);color:var(--accent-cyan);"><i class="bx bx-check-circle"></i> 標記為已解鎖！</button>
+            <button class="action-btn matched-complete-btn" onclick="setAchievementState('${item.id}','unlocked', event);renderMatcher();" style="border-color:var(--accent-cyan);color:var(--accent-cyan);"><i class="bx bx-check-circle"></i> 標記為已解鎖！</button>
           </div>
         </div>`;
     });
@@ -584,229 +590,281 @@ function getAchievementTotals() {
 }
 
 function generateShareCard() {
-  const canvasElement = previewCanvas;
-  const ctx = canvasElement.getContext("2d");
+  const drawContent = () => {
+    const canvasElement = previewCanvas;
+    const ctx = canvasElement.getContext("2d");
 
-  // 1. 背景 (暗色賽博龐克漸層)
-  const grad = ctx.createLinearGradient(0, 0, 0, 1200);
-  grad.addColorStop(0, '#05080f');
-  grad.addColorStop(0.5, '#0f1a2f');
-  grad.addColorStop(1, '#05080f');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 800, 1200);
+    // 1. 背景 (暗色賽博龐克漸層)
+    const grad = ctx.createLinearGradient(0, 0, 0, 1200);
+    grad.addColorStop(0, '#05080f');
+    grad.addColorStop(0.5, '#0f1a2f');
+    grad.addColorStop(1, '#05080f');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 800, 1200);
 
-  // 裝飾性發光圓
-  ctx.fillStyle = 'rgba(0, 229, 255, 0.10)';
-  ctx.beginPath();
-  ctx.arc(150, 250, 280, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
-  ctx.beginPath();
-  ctx.arc(680, 880, 280, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(168, 85, 247, 0.06)';
-  ctx.beginPath();
-  ctx.arc(380, 600, 220, 0, Math.PI * 2);
-  ctx.fill();
+    // 裝飾性發光圓
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.10)';
+    ctx.beginPath();
+    ctx.arc(150, 250, 280, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
+    ctx.beginPath();
+    ctx.arc(680, 880, 280, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(168, 85, 247, 0.06)';
+    ctx.beginPath();
+    ctx.arc(380, 600, 220, 0, Math.PI * 2);
+    ctx.fill();
 
-  // 2. 標題
-  ctx.textAlign = 'center';
-  ctx.font = 'bold 50px sans-serif';
-  ctx.fillStyle = '#00e5ff';
-  ctx.shadowBlur = 20;
-  ctx.shadowColor = 'rgba(0, 229, 255, 0.6)';
-  ctx.fillText("G A M E R", 400, 120);
-  ctx.shadowBlur = 0;
+    // 2. 標題
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 50px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#00e5ff';
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = 'rgba(0, 229, 255, 0.6)';
+    ctx.fillText("G A M E R", 400, 120);
+    ctx.shadowBlur = 0;
 
-  ctx.font = 'bold 22px sans-serif';
-  ctx.fillStyle = '#10b981';
-  ctx.fillText("✦ 遊戲玩家解鎖成就探索卡 ✦", 400, 175);
+    ctx.font = 'bold 22px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#10b981';
+    ctx.fillText("✦ 遊戲玩家解鎖成就探索卡 ✦", 400, 175);
 
-  ctx.beginPath();
-  ctx.moveTo(80, 205);
-  ctx.lineTo(720, 205);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(80, 205);
+    ctx.lineTo(720, 205);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
-  // 3. 個人資訊面板
-  ctx.textAlign = 'left';
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-  ctx.strokeStyle = 'rgba(0, 229, 255, 0.2)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.roundRect(80, 235, 640, 140, 20);
-  ctx.fill();
-  ctx.stroke();
+    // 3. 個人資訊面板
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(80, 235, 640, 140, 20);
+    ctx.fill();
+    ctx.stroke();
 
-  ctx.font = '75px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(userChoices.avatar, 160, 330);
+    ctx.font = '75px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(userChoices.avatar, 160, 330);
 
-  const stats = getAchievementTotals();
-  const pct = Math.round((stats.unlocked / stats.total) * 100) || 0;
-  const level = Math.floor(stats.unlocked / 10) + 1;
+    const stats = getAchievementTotals();
+    const pct = Math.round((stats.unlocked / stats.total) * 100) || 0;
+    const level = Math.floor(stats.unlocked / 10) + 1;
 
-  let activeMilestone = milestones[0];
-  for (let i = milestones.length - 1; i >= 0; i--) {
-    if (stats.unlocked >= milestones[i].count) {
-      activeMilestone = milestones[i];
-      break;
-    }
-  }
-
-  ctx.textAlign = 'left';
-  ctx.font = 'bold 26px sans-serif';
-  ctx.fillStyle = '#fff';
-  ctx.fillText(userChoices.nickname, 240, 290);
-
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillStyle = '#00e5ff';
-  ctx.fillText(`等級 LV.${level} - ${activeMilestone.title} ${activeMilestone.icon}`, 240, 328);
-
-  ctx.font = '14px sans-serif';
-  ctx.fillStyle = '#9ca3af';
-  ctx.fillText(activeMilestone.desc.substring(0, 25) + "...", 240, 355);
-
-  // 4. 進度數據盒
-  ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(16, 185, 129, 0.04)';
-  ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
-  ctx.beginPath();
-  ctx.roundRect(80, 400, 640, 110, 15);
-  ctx.fill();
-  ctx.stroke();
-
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillStyle = '#10b981';
-  ctx.fillText("個人遊戲解鎖進度", 240, 442);
-
-  ctx.font = 'bold 36px sans-serif';
-  ctx.fillStyle = '#fff';
-  ctx.fillText(`${pct}%`, 240, 488);
-
-  ctx.font = 'bold 18px sans-serif';
-  ctx.fillStyle = '#f59e0b';
-  ctx.fillText("累積解鎖成就", 560, 442);
-
-  ctx.font = 'bold 36px sans-serif';
-  ctx.fillStyle = '#fff';
-  ctx.fillText(`${stats.unlocked} / ${stats.total}`, 560, 488);
-
-  // 5. 亮點想挑戰的願望清單
-  ctx.textAlign = 'center';
-  ctx.font = 'bold 20px sans-serif';
-  ctx.fillStyle = '#f59e0b';
-  ctx.fillText("🎮 我的遊戲攻略目標 🎮", 400, 565);
-
-  ctx.beginPath();
-  ctx.moveTo(80, 585);
-  ctx.lineTo(720, 585);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-  ctx.stroke();
-
-  const wishesList = window.gameData.achievements.filter(item => {
-    return (userChoices.pa[item.id] || "locked") === "want";
-  });
-
-  ctx.textAlign = 'center';
-  if (wishesList.length === 0) {
-    ctx.font = 'italic 18px sans-serif';
-    ctx.fillStyle = '#4b5563';
-    ctx.fillText("尚無特別想挑戰的項目，快去勾選您感興趣的清單吧！", 400, 690);
-    ctx.fillText("在清單頁面中，點擊項目底部的『想挑戰』即可在此亮起 🎯", 400, 725);
-  } else {
-    let startY = 635;
-    const drawCount = Math.min(wishesList.length, 5);
-
-    for (let i = 0; i < drawCount; i++) {
-      const item = wishesList[i];
-      const catObj = window.gameData.categories.find(c => c.id === item.category);
-      const catIcon = catObj ? catObj.icon : "🎮";
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
-      ctx.beginPath();
-      ctx.roundRect(80, startY - 30, 640, 50, 10);
-      ctx.fill();
-
-      ctx.textAlign = 'left';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillStyle = '#00e5ff';
-      ctx.fillText(`${catIcon}  ${item.title}`, 110, startY + 2);
-
-      ctx.textAlign = 'right';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillText("TARGET 🎯", 690, startY + 2);
-
-      startY += 62;
+    let activeMilestone = milestones[0];
+    for (let i = milestones.length - 1; i >= 0; i--) {
+      if (stats.unlocked >= milestones[i].count) {
+        activeMilestone = milestones[i];
+        break;
+      }
     }
 
-    if (wishesList.length > 5) {
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 26px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(userChoices.nickname, 240, 290);
+
+    ctx.font = 'bold 18px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillText(`等級 LV.${level} - ${activeMilestone.title} ${activeMilestone.icon}`, 240, 328);
+
+    ctx.font = '14px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillText(activeMilestone.desc.substring(0, 25) + "...", 240, 355);
+
+    // 4. 進度數據盒
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.04)';
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.2)';
+    ctx.beginPath();
+    ctx.roundRect(80, 400, 640, 110, 15);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = 'bold 18px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#10b981';
+    ctx.fillText("個人遊戲解鎖進度", 240, 442);
+
+    ctx.font = 'bold 36px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`${pct}%`, 240, 488);
+
+    ctx.font = 'bold 18px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillText("累積解鎖成就", 560, 442);
+
+    ctx.font = 'bold 36px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`${stats.unlocked} / ${stats.total}`, 560, 488);
+
+    // 5. 成就清單與攻略目標
+    const wishesList = window.gameData.achievements.filter(item => {
+      return (userChoices.pa[item.id] || "locked") === "want";
+    });
+    const unlockedList = window.gameData.achievements.filter(item => {
+      return (userChoices.pa[item.id] || "locked") === "unlocked";
+    });
+
+    // Section A: 已解鎖成就精選 (Featured Unlocked)
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 20px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#00e5ff';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(0, 229, 255, 0.3)';
+    ctx.fillText("🏆 已解鎖成就精選 🏆", 400, 565);
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    ctx.moveTo(80, 582);
+    ctx.lineTo(720, 582);
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.15)';
+    ctx.stroke();
+
+    let unlockedY = 620;
+    const drawUnlockedCount = Math.min(unlockedList.length, 3);
+    if (drawUnlockedCount === 0) {
       ctx.textAlign = 'center';
-      ctx.font = 'bold 15px sans-serif';
-      ctx.fillStyle = '#9ca3af';
-      ctx.fillText(`... 以及其他共 ${wishesList.length - 5} 個已勾選目標 ...`, 400, startY + 2);
+      ctx.font = 'italic 16px "Outfit", "Noto Sans TC", sans-serif';
+      ctx.fillStyle = '#4b5563';
+      ctx.fillText("尚無解鎖成就，快去探索清單解鎖吧！ 🎮", 400, 650);
+    } else {
+      for (let i = 0; i < drawUnlockedCount; i++) {
+        const item = unlockedList[i];
+        const catObj = window.gameData.categories.find(c => c.id === item.category);
+        const catIcon = catObj ? catObj.icon : "🎮";
+
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.02)';
+        ctx.beginPath();
+        ctx.roundRect(80, unlockedY - 26, 640, 42, 8);
+        ctx.fill();
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 15px "Outfit", "Noto Sans TC", sans-serif';
+        ctx.fillStyle = '#00e5ff';
+        ctx.fillText(`${catIcon}  ${item.title}`, 110, unlockedY + 2);
+
+        ctx.textAlign = 'right';
+        ctx.font = 'bold 12px "Outfit", "Noto Sans TC", sans-serif';
+        ctx.fillStyle = '#10b981';
+        ctx.fillText("UNLOCKED 🏆", 690, unlockedY + 2);
+
+        unlockedY += 54;
+      }
     }
+
+    // Section B: 預定攻略目標 (Targets to Challenge)
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 20px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#f59e0b';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(245, 158, 11, 0.3)';
+    ctx.fillText("🎯 預定攻略目標 🎯", 400, 775);
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    ctx.moveTo(80, 792);
+    ctx.lineTo(720, 792);
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.15)';
+    ctx.stroke();
+
+    let wishesY = 830;
+    const drawWishesCount = Math.min(wishesList.length, 3);
+    if (drawWishesCount === 0) {
+      ctx.textAlign = 'center';
+      ctx.font = 'italic 16px "Outfit", "Noto Sans TC", sans-serif';
+      ctx.fillStyle = '#4b5563';
+      ctx.fillText("尚無設定想挑戰的項目，快去勾選清單規劃吧！ 🎯", 400, 860);
+    } else {
+      for (let i = 0; i < drawWishesCount; i++) {
+        const item = wishesList[i];
+        const catObj = window.gameData.categories.find(c => c.id === item.category);
+        const catIcon = catObj ? catObj.icon : "🎮";
+
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.02)';
+        ctx.beginPath();
+        ctx.roundRect(80, wishesY - 26, 640, 42, 8);
+        ctx.fill();
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 15px "Outfit", "Noto Sans TC", sans-serif';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(`${catIcon}  ${item.title}`, 110, wishesY + 2);
+
+        ctx.textAlign = 'right';
+        ctx.font = 'bold 12px "Outfit", "Noto Sans TC", sans-serif';
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillText("TARGET 🎯", 690, wishesY + 2);
+
+        wishesY += 54;
+      }
+    }
+
+    // 6. 金句
+    ctx.textAlign = 'center';
+    ctx.font = 'italic 16px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillText("「遊戲的感動，是我們無悔的青春與信仰。」", 400, 980);
+
+    // 7. 二維碼與底欄
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.roundRect(575, 1015, 140, 140, 10);
+    ctx.fill();
+
+    const qrContainer = document.createElement("div");
+    new QRCode(qrContainer, {
+      text: window.location.href || "https://gamer-achievement-list.pages.dev",
+      width: 130,
+      height: 130,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 24px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillText("GAMER 遊戲解鎖成就清單", 80, 1052);
+
+    ctx.font = 'bold 15px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillText(window.location.host || "gamer-achievement-list.pages.dev", 80, 1088);
+
+    ctx.font = '14px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillText("掃描右側二維碼，挑戰你的遊戲玩家等級", 80, 1120);
+
+    ctx.font = '12px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#4b5563';
+    ctx.fillText("100% 瀏覽器本地安全隱私保護 • 網頁參考自動漫成就清單", 80, 1150);
+
+    ctx.font = 'bold 13px "Outfit", "Noto Sans TC", sans-serif';
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillText(SITE_URL, 80, 1175);
+
+    setTimeout(() => {
+      const qrCanvas = qrContainer.querySelector("canvas");
+      if (qrCanvas) {
+        ctx.drawImage(qrCanvas, 580, 1020, 130, 130);
+      }
+      ctx.strokeStyle = "#00e5ff";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(575, 1015, 140, 140);
+
+      previewImg.src = canvasElement.toDataURL("image/png");
+      shareModalBackdrop.style.display = "flex";
+    }, 80);
+  };
+
+  // 確保自訂字型已載入後再繪製
+  if (document.fonts) {
+    document.fonts.ready.then(drawContent);
+  } else {
+    drawContent();
   }
-
-  // 6. 金句
-  ctx.textAlign = 'center';
-  ctx.font = 'italic 16px sans-serif';
-  ctx.fillStyle = '#9ca3af';
-  ctx.fillText("「遊戲的感動，是我們無悔的青春與信仰。」", 400, 980);
-
-  // 7. 二維碼與底欄
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.roundRect(575, 1015, 140, 140, 10);
-  ctx.fill();
-
-  const qrContainer = document.createElement("div");
-  new QRCode(qrContainer, {
-    text: window.location.href || "https://gamer-achievement.pages.dev",
-    width: 130,
-    height: 130,
-    colorDark: "#000000",
-    colorLight: "#ffffff",
-    correctLevel: QRCode.CorrectLevel.M
-  });
-
-  setTimeout(() => {
-    const qrCanvas = qrContainer.querySelector("canvas");
-    if (qrCanvas) {
-      ctx.drawImage(qrCanvas, 580, 1020, 130, 130);
-    }
-    ctx.strokeStyle = "#00e5ff";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(575, 1015, 140, 140);
-  }, 50);
-
-  ctx.textAlign = 'left';
-  ctx.font = 'bold 24px sans-serif';
-  ctx.fillStyle = '#f59e0b';
-  ctx.fillText("GAMER 遊戲解鎖成就清單", 80, 1052);
-
-  ctx.font = 'bold 15px sans-serif';
-  ctx.fillStyle = '#00e5ff';
-  ctx.fillText(window.location.host || "gamer-achievement.pages.dev", 80, 1088);
-
-  ctx.font = '14px sans-serif';
-  ctx.fillStyle = '#9ca3af';
-  ctx.fillText("掃描右側二維碼，挑戰你的遊戲玩家等級", 80, 1120);
-
-  ctx.font = '12px sans-serif';
-  ctx.fillStyle = '#4b5563';
-  ctx.fillText("100% 瀏覽器本地安全隱私保護 • 網頁參考自動漫成就清單", 80, 1150);
-
-  ctx.font = 'bold 13px sans-serif';
-  ctx.fillStyle = '#00e5ff';
-  ctx.fillText(SITE_URL, 80, 1175);
-
-  setTimeout(() => {
-    previewImg.src = canvasElement.toDataURL("image/png");
-    shareModalBackdrop.style.display = "flex";
-  }, 150);
 }
 
 downloadShareCardBtn.addEventListener("click", () => {
@@ -844,17 +902,19 @@ function initSparkles() {
   });
 }
 
-window.triggerSparkles = function () {
+window.triggerSparkles = function (originX, originY) {
   const count = 40;
   const colors = ["#00e5ff", "#10b981", "#f59e0b", "#a855f7", "#ef4444", "#ffffff"];
+  const useOrigin = (typeof originX === "number" && typeof originY === "number");
+  
   for (let i = 0; i < count; i++) {
     particles.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height * 0.5 + canvas.height * 0.3,
+      x: useOrigin ? originX : Math.random() * canvas.width,
+      y: useOrigin ? originY : Math.random() * canvas.height * 0.5 + canvas.height * 0.3,
       size: Math.random() * 4 + 2,
       color: colors[Math.floor(Math.random() * colors.length)],
-      speedX: (Math.random() - 0.5) * 3,
-      speedY: -Math.random() * 5 - 2,
+      speedX: useOrigin ? (Math.random() - 0.5) * 8 : (Math.random() - 0.5) * 3,
+      speedY: useOrigin ? (Math.random() - 0.5) * 8 - 3 : -Math.random() * 5 - 2,
       life: 1,
       decay: Math.random() * 0.03 + 0.02
     });
@@ -902,7 +962,11 @@ document.querySelectorAll(".nav-item").forEach(item => {
 });
 
 // --- Search & Filter 監聽 ---
-searchBar.addEventListener("input", () => renderAchievements());
+let searchTimeout;
+searchBar.addEventListener("input", () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(renderAchievements, 150);
+});
 
 document.querySelectorAll(".status-filters .status-btn").forEach(btn => {
   btn.addEventListener("click", () => {
